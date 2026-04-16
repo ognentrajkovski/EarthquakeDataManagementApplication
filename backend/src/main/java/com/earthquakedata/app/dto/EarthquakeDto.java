@@ -1,5 +1,6 @@
 package com.earthquakedata.app.dto;
 
+import com.earthquakedata.app.model.Earthquake;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -24,4 +25,20 @@ public class EarthquakeDto {
     private Double longitude;
     private Double depth;
     private LocalDateTime fetchedAt;
+
+    public static EarthquakeDto fromEntity(Earthquake entity) {
+        return EarthquakeDto.builder()
+                .id(entity.getId())
+                .usgsId(entity.getUsgsId())
+                .magnitude(entity.getMagnitude())
+                .magType(entity.getMagType())
+                .place(entity.getPlace())
+                .title(entity.getTitle())
+                .time(entity.getTime())
+                .latitude(entity.getLatitude())
+                .longitude(entity.getLongitude())
+                .depth(entity.getDepth())
+                .fetchedAt(entity.getFetchedAt())
+                .build();
+    }
 }

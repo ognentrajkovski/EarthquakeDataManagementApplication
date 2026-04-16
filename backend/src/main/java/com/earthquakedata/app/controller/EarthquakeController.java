@@ -1,6 +1,6 @@
 package com.earthquakedata.app.controller;
 
-import com.earthquakedata.app.model.Earthquake;
+import com.earthquakedata.app.dto.EarthquakeDto;
 import com.earthquakedata.app.service.EarthquakeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,19 +26,20 @@ public class EarthquakeController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<Earthquake>> getAll(
+    public ResponseEntity<Page<EarthquakeDto>> getAll(
             @RequestParam Optional<Double> minMag,
             @RequestParam Optional<Long> after,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "time"));
-        Page<Earthquake> earthquakes = earthquakeService.findAll(minMag, after, pageable);
+        Page<EarthquakeDto> earthquakes = earthquakeService.findAll(minMag, after, pageable)
+                .map(EarthquakeDto::fromEntity);
         return ResponseEntity.ok(earthquakes);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Earthquake> getById(@PathVariable Long id) {
-        return ResponseEntity.ok(earthquakeService.findById(id));
+    public ResponseEntity<EarthquakeDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(EarthquakeDto.fromEntity(earthquakeService.findById(id)));
     }
 
     @DeleteMapping("/{id}")

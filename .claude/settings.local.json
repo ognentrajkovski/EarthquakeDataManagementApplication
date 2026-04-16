@@ -10,7 +10,9 @@
       "Bash(java -XshowSettings:vm -version)",
       "Bash(npm install:*)",
       "Read(//opt/homebrew/bin/**)",
-      "Read(//usr/local/bin/**)"
+      "Read(//usr/local/bin/**)",
+      "Bash(curl -s http://localhost:8080/api/earthquakes)",
+      "Bash(mvn spring-boot:run)"
     ]
   }
 }
