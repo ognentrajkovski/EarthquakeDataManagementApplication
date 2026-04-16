@@ -39,7 +39,7 @@ export default function EarthquakeMap({ earthquakes }) {
             <br />
             Place: {eq.place}
             <br />
-            Time: {eq.time ? new Date(eq.time).toLocaleString() : '-'}
+            Time (UTC): {eq.time ? new Date(eq.time).toLocaleString('en-US', { timeZone: 'UTC' }) : '-'}
           </Popup>
         </CircleMarker>
       ))}

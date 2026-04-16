@@ -13,9 +13,9 @@ import org.springframework.web.client.RestTemplate;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -54,18 +54,18 @@ public class UsgsApiService {
         }
 
         LocalDateTime fetchedAt = LocalDateTime.now(ZoneOffset.UTC);
-        List<Earthquake> earthquakes = new ArrayList<>();
 
-        for (GeoJsonResponse.Feature feature : response.getFeatures()) {
-            try {
-                Earthquake earthquake = mapFeatureToEarthquake(feature, fetchedAt);
-                if (earthquake != null) {
-                    earthquakes.add(earthquake);
-                }
-            } catch (Exception ex) {
-                log.warn("Skipping malformed feature [id={}]: {}", feature.getId(), ex.getMessage());
-            }
-        }
+        List<Earthquake> earthquakes = response.getFeatures().stream()
+                .map(feature -> {
+                    try {
+                        return mapFeatureToEarthquake(feature, fetchedAt);
+                    } catch (Exception ex) {
+                        log.warn("Skipping malformed feature [id={}]: {}", feature.getId(), ex.getMessage());
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .toList();
 
         log.info("Fetched {} valid earthquakes from USGS", earthquakes.size());
         return earthquakes;

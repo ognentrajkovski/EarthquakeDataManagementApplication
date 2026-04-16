@@ -41,7 +41,7 @@ export default function EarthquakeTable({ earthquakes, loading, error, onRefresh
             <th>Magnitude</th>
             <th>Mag Type</th>
             <th>Place</th>
-            <th>Time</th>
+            <th>Time (UTC)</th>
             <th>Lat</th>
             <th>Lon</th>
             <th>Depth</th>
@@ -55,7 +55,7 @@ export default function EarthquakeTable({ earthquakes, loading, error, onRefresh
               <td>{eq.magnitude}</td>
               <td>{eq.magType}</td>
               <td>{eq.place}</td>
-              <td>{eq.time ? new Date(eq.time).toLocaleString() : '-'}</td>
+              <td>{eq.time ? new Date(eq.time).toLocaleString('en-US', { timeZone: 'UTC' }) : '-'}</td>
               <td>{eq.latitude}</td>
               <td>{eq.longitude}</td>
               <td>{eq.depth}</td>

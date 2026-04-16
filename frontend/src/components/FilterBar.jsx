@@ -22,7 +22,7 @@ export default function FilterBar({ onApply }) {
         />
       </div>
       <div>
-        <label className="form-label mb-1">After Time</label>
+        <label className="form-label mb-1">After Time (Local)</label>
         <input
           type="datetime-local"
           className="form-control"
