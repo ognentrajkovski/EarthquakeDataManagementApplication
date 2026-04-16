@@ -3,6 +3,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Navbar from './components/Navbar';
 import FilterBar from './components/FilterBar';
 import EarthquakeTable from './components/EarthquakeTable';
+import EarthquakeMap from './components/EarthquakeMap';
 import { getAllEarthquakes } from './api/earthquakeApi';
 
 function App() {
@@ -10,6 +11,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({ minMag: '', after: '' });
+  const [view, setView] = useState('table');
 
   const loadEarthquakes = useCallback(async () => {
     setLoading(true);
@@ -36,12 +38,30 @@ function App() {
     <div>
       <Navbar onRefresh={loadEarthquakes} />
       <FilterBar onApply={handleApplyFilters} />
-      <EarthquakeTable
-        earthquakes={earthquakes}
-        loading={loading}
-        error={error}
-        onRefresh={loadEarthquakes}
-      />
+      <div className="d-flex gap-2 p-3">
+        <button
+          className={`btn btn-sm ${view === 'table' ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => setView('table')}
+        >
+          Table View
+        </button>
+        <button
+          className={`btn btn-sm ${view === 'map' ? 'btn-primary' : 'btn-outline-primary'}`}
+          onClick={() => setView('map')}
+        >
+          Map View
+        </button>
+      </div>
+      {view === 'table' ? (
+        <EarthquakeTable
+          earthquakes={earthquakes}
+          loading={loading}
+          error={error}
+          onRefresh={loadEarthquakes}
+        />
+      ) : (
+        <EarthquakeMap earthquakes={earthquakes} />
+      )}
     </div>
   );
 }

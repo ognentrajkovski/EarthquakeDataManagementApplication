@@ -1,2 +1,2 @@
-/Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/test/java/com/codeit/earthquake/controller/EarthquakeControllerTest.java
-/Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/test/java/com/codeit/earthquake/service/EarthquakeServiceIntegrationTest.java
+/Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/test/java/com/earthquakedata/app/controller/EarthquakeControllerTest.java
+/Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/test/java/com/earthquakedata/app/service/EarthquakeServiceIntegrationTest.java
