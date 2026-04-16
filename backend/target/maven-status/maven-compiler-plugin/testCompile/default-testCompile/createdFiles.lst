@@ -1,2 +1,3 @@
 com/earthquakedata/app/service/EarthquakeServiceIntegrationTest.class
 com/earthquakedata/app/controller/EarthquakeControllerTest.class
+com/earthquakedata/app/service/UsgsApiServiceTest.class
