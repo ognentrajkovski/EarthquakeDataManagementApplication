@@ -10,9 +10,11 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -51,14 +53,17 @@ class EarthquakeControllerTest {
     }
 
     @Test
-    void getAll_returns200WithList() throws Exception {
+    void getAll_returns200WithPage() throws Exception {
         List<Earthquake> list = List.of(sampleEarthquake(1L), sampleEarthquake(2L));
-        when(earthquakeService.findAll(any(), any())).thenReturn(list);
+        PageImpl<Earthquake> page = new PageImpl<>(list, PageRequest.of(0, 20), 2);
+        when(earthquakeService.findAll(any(), any(), any())).thenReturn(page);
 
         mockMvc.perform(get("/api/earthquakes"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", hasSize(2)))
-                .andExpect(jsonPath("$[0].usgsId", is("us2025test")));
+                .andExpect(jsonPath("$.content", hasSize(2)))
+                .andExpect(jsonPath("$.content[0].usgsId", is("us2025test")))
+                .andExpect(jsonPath("$.totalElements", is(2)))
+                .andExpect(jsonPath("$.totalPages", is(1)));
     }
 
     @Test

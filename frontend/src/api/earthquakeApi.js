@@ -8,8 +8,8 @@ export function fetchLatest() {
   return api.post('/api/earthquakes/fetch');
 }
 
-export function getAllEarthquakes(minMag, after) {
-  const params = {};
+export function getAllEarthquakes(minMag, after, page = 0, size = 20) {
+  const params = { page, size };
   if (minMag !== undefined && minMag !== '') params.minMag = minMag;
   if (after) params.after = new Date(after).getTime();
   return api.get('/api/earthquakes', { params });

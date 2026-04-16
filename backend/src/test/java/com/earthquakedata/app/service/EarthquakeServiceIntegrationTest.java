@@ -7,6 +7,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
@@ -108,10 +110,10 @@ class EarthquakeServiceIntegrationTest {
                         .latitude(0.0).longitude(0.0).depth(0.0).fetchedAt(TIME_RECENT).build()
         ));
 
-        List<Earthquake> result = earthquakeService.findAll(Optional.of(4.0), Optional.empty());
+        Page<Earthquake> result = earthquakeService.findAll(Optional.of(4.0), Optional.empty(), PageRequest.of(0, 20));
 
-        assertThat(result).hasSize(2);
-        assertThat(result).extracting(Earthquake::getUsgsId)
+        assertThat(result.getContent()).hasSize(2);
+        assertThat(result.getContent()).extracting(Earthquake::getUsgsId)
                 .containsExactlyInAnyOrder("b", "c");
     }
 
@@ -131,10 +133,10 @@ class EarthquakeServiceIntegrationTest {
         long cutoffEpoch = LocalDateTime.of(2025, 1, 1, 0, 0)
                 .toInstant(ZoneOffset.UTC).toEpochMilli();
 
-        List<Earthquake> result = earthquakeService.findAll(Optional.empty(), Optional.of(cutoffEpoch));
+        Page<Earthquake> result = earthquakeService.findAll(Optional.empty(), Optional.of(cutoffEpoch), PageRequest.of(0, 20));
 
-        assertThat(result).hasSize(1);
-        assertThat(result.get(0).getUsgsId()).isEqualTo("new");
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getUsgsId()).isEqualTo("new");
     }
 
     @Test

@@ -3,10 +3,12 @@ package com.earthquakedata.app.controller;
 import com.earthquakedata.app.model.Earthquake;
 import com.earthquakedata.app.service.EarthquakeService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -24,10 +26,13 @@ public class EarthquakeController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Earthquake>> getAll(
+    public ResponseEntity<Page<Earthquake>> getAll(
             @RequestParam Optional<Double> minMag,
-            @RequestParam Optional<Long> after) {
-        List<Earthquake> earthquakes = earthquakeService.findAll(minMag, after);
+            @RequestParam Optional<Long> after,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "time"));
+        Page<Earthquake> earthquakes = earthquakeService.findAll(minMag, after, pageable);
         return ResponseEntity.ok(earthquakes);
     }
 

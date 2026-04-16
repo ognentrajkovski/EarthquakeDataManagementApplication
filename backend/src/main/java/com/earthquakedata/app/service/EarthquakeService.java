@@ -1,8 +1,9 @@
 package com.earthquakedata.app.service;
 
 import com.earthquakedata.app.model.Earthquake;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface EarthquakeService {
@@ -22,9 +23,10 @@ public interface EarthquakeService {
      *
      * @param minMag     if present, only earthquakes with magnitude &ge; this value are returned
      * @param afterEpoch if present, only earthquakes occurring after this epoch (ms) are returned
-     * @return the filtered list of earthquakes
+     * @param pageable   pagination and sorting parameters
+     * @return a page of filtered earthquakes
      */
-    List<Earthquake> findAll(Optional<Double> minMag, Optional<Long> afterEpoch);
+    Page<Earthquake> findAll(Optional<Double> minMag, Optional<Long> afterEpoch, Pageable pageable);
 
     /**
      * Retrieves a single earthquake by its database ID.

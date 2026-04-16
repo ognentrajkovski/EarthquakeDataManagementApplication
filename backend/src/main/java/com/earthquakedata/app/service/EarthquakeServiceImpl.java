@@ -5,6 +5,8 @@ import com.earthquakedata.app.model.Earthquake;
 import com.earthquakedata.app.repository.EarthquakeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -56,19 +58,19 @@ public class EarthquakeServiceImpl implements EarthquakeService {
      */
     @Override
     @Transactional(readOnly = true)
-    public List<Earthquake> findAll(Optional<Double> minMag, Optional<Long> afterEpoch) {
+    public Page<Earthquake> findAll(Optional<Double> minMag, Optional<Long> afterEpoch, Pageable pageable) {
         Optional<LocalDateTime> afterTime = afterEpoch.map(epoch ->
                 LocalDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneOffset.UTC));
 
         if (minMag.isPresent() && afterTime.isPresent()) {
-            return repository.findByMagnitudeGreaterThanEqualAndTimeAfter(minMag.get(), afterTime.get());
+            return repository.findByMagnitudeGreaterThanEqualAndTimeAfter(minMag.get(), afterTime.get(), pageable);
         } else if (minMag.isPresent()) {
-            return repository.findByMagnitudeGreaterThanEqual(minMag.get());
+            return repository.findByMagnitudeGreaterThanEqual(minMag.get(), pageable);
         } else if (afterTime.isPresent()) {
-            return repository.findByTimeAfter(afterTime.get());
+            return repository.findByTimeAfter(afterTime.get(), pageable);
         }
 
-        return repository.findAll();
+        return repository.findAll(pageable);
     }
 
     /**
