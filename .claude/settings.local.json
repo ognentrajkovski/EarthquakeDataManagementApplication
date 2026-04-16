@@ -14,7 +14,8 @@
       "Bash(curl -s http://localhost:8080/api/earthquakes)",
       "Bash(mvn spring-boot:run)",
       "Bash(/opt/homebrew/bin/npm install:*)",
-      "Bash(/opt/homebrew/bin/npx vitest:*)"
+      "Bash(/opt/homebrew/bin/npx vitest:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

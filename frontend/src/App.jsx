@@ -6,6 +6,7 @@ import EarthquakeTable from './components/EarthquakeTable';
 import EarthquakeMap from './components/EarthquakeMap';
 import Toast from './components/Toast';
 import { getAllEarthquakes } from './api/earthquakeApi';
+import { downloadCsv } from './utils/csvExport';
 
 function App() {
   const [earthquakes, setEarthquakes] = useState([]);
@@ -51,6 +52,16 @@ function App() {
     setFilters(newFilters);
   }
 
+  function handleExportCsv() {
+    if (!earthquakes.length) {
+      showToast('No earthquakes to export', 'danger');
+      return;
+    }
+    const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+    downloadCsv(earthquakes, `earthquakes-${stamp}.csv`);
+    showToast(`Exported ${earthquakes.length} earthquakes`, 'success');
+  }
+
   return (
     <div>
       <Navbar onRefresh={loadEarthquakes} showToast={showToast} />
@@ -67,6 +78,14 @@ function App() {
           onClick={() => setView('map')}
         >
           Map View
+        </button>
+        <button
+          className="btn btn-sm btn-outline-success"
+          onClick={handleExportCsv}
+          disabled={!earthquakes.length}
+          title="Download current page as CSV"
+        >
+          Export CSV
         </button>
         <span className="text-muted ms-auto">{totalElements} earthquakes total</span>
       </div>
