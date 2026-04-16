@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.149" tests="9" errors="0" skipped="0" failures="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.earthquakedata.app.service.EarthquakePollingSchedulerTest" time="0.008" tests="2" errors="0" skipped="0" failures="0">
   <properties>
     <property name="java.specification.version" value="25"/>
     <property name="sun.jnu.encoding" value="UTF-8"/>
@@ -66,40 +66,12 @@
     <property name="socksNonProxyHosts" value="local|*.local|169.254/16|*.169.254/16"/>
     <property name="java.class.version" value="69.0"/>
   </properties>
-  <testcase name="fetchEarthquakes_throwsExternalApiExceptionOnRestClientError" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.131"/>
-  <testcase name="fetchEarthquakes_returnsEmptyListWhenFeaturesIsNull" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.006">
-    <system-out><![CDATA[2026-04-16T21:20:21.031+02:00  WARN 12712 --- [           main] c.e.app.service.UsgsApiService           : USGS API returned null response or null features list
+  <testcase name="pollUsgs_swallowsExceptionsSoSchedulerKeepsRunning" classname="com.earthquakedata.app.service.EarthquakePollingSchedulerTest" time="0.005">
+    <system-out><![CDATA[2026-04-16T21:20:21.052+02:00  WARN 12712 --- [           main] c.e.a.s.EarthquakePollingScheduler       : Scheduled USGS poll failed: USGS down
 ]]></system-out>
   </testcase>
-  <testcase name="fetchEarthquakes_skipsFeatureWithNullProperties" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.003">
-    <system-out><![CDATA[2026-04-16T21:20:21.037+02:00  WARN 12712 --- [           main] c.e.app.service.UsgsApiService           : Skipping feature [id=bad1]: missing properties
-2026-04-16T21:20:21.037+02:00  INFO 12712 --- [           main] c.e.app.service.UsgsApiService           : Fetched 1 valid earthquakes from USGS
-]]></system-out>
-  </testcase>
-  <testcase name="fetchEarthquakes_skipsFeatureWithNullGeometry" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.001">
-    <system-out><![CDATA[2026-04-16T21:20:21.039+02:00  WARN 12712 --- [           main] c.e.app.service.UsgsApiService           : Skipping feature [id=bad2]: missing or incomplete geometry
-2026-04-16T21:20:21.039+02:00  INFO 12712 --- [           main] c.e.app.service.UsgsApiService           : Fetched 1 valid earthquakes from USGS
-]]></system-out>
-  </testcase>
-  <testcase name="fetchEarthquakes_returnsEmptyListWhenFeaturesIsEmpty" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.001">
-    <system-out><![CDATA[2026-04-16T21:20:21.040+02:00  INFO 12712 --- [           main] c.e.app.service.UsgsApiService           : Fetched 0 valid earthquakes from USGS
-]]></system-out>
-  </testcase>
-  <testcase name="fetchEarthquakes_returnsEmptyListWhenResponseIsNull" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.001">
-    <system-out><![CDATA[2026-04-16T21:20:21.041+02:00  WARN 12712 --- [           main] c.e.app.service.UsgsApiService           : USGS API returned null response or null features list
-]]></system-out>
-  </testcase>
-  <testcase name="fetchEarthquakes_parsesValidFeatures" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.002">
-    <system-out><![CDATA[2026-04-16T21:20:21.042+02:00  INFO 12712 --- [           main] c.e.app.service.UsgsApiService           : Fetched 2 valid earthquakes from USGS
-]]></system-out>
-  </testcase>
-  <testcase name="fetchEarthquakes_handlesNullTime" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.001">
-    <system-out><![CDATA[2026-04-16T21:20:21.045+02:00  INFO 12712 --- [           main] c.e.app.service.UsgsApiService           : Fetched 1 valid earthquakes from USGS
-]]></system-out>
-  </testcase>
-  <testcase name="fetchEarthquakes_skipsFeatureWithIncompleteCoordinates" classname="com.earthquakedata.app.service.UsgsApiServiceTest" time="0.001">
-    <system-out><![CDATA[2026-04-16T21:20:21.045+02:00  WARN 12712 --- [           main] c.e.app.service.UsgsApiService           : Skipping feature [id=bad3]: missing or incomplete geometry
-2026-04-16T21:20:21.046+02:00  INFO 12712 --- [           main] c.e.app.service.UsgsApiService           : Fetched 0 valid earthquakes from USGS
+  <testcase name="pollUsgs_delegatesToService" classname="com.earthquakedata.app.service.EarthquakePollingSchedulerTest" time="0.001">
+    <system-out><![CDATA[2026-04-16T21:20:21.055+02:00  INFO 12712 --- [           main] c.e.a.s.EarthquakePollingScheduler       : Scheduled USGS poll stored 3 new earthquakes
 ]]></system-out>
   </testcase>
 </testsuite>

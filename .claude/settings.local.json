@@ -15,7 +15,8 @@
       "Bash(mvn spring-boot:run)",
       "Bash(/opt/homebrew/bin/npm install:*)",
       "Bash(/opt/homebrew/bin/npx vitest:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(mvn -q test)"
     ]
   }
 }

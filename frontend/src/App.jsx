@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import Navbar from './components/Navbar';
 import FilterBar from './components/FilterBar';
@@ -18,6 +18,16 @@ function App() {
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
   const [toasts, setToasts] = useState([]);
+  const [lastUpdated, setLastUpdated] = useState(null);
+
+  // Poll interval for the silent background refresh (ms). Matches the
+  // backend scheduler cadence (earthquake.polling.interval-ms).
+  const POLL_INTERVAL_MS = 60_000;
+
+  // Ref holding the latest loader so the interval never needs to be re-created
+  // when filters/page change.
+  const loaderRef = useRef(null);
+  const inFlightRef = useRef(false);
 
   function showToast(message, type = 'danger') {
     const id = Date.now();
@@ -28,24 +38,60 @@ function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }
 
-  const loadEarthquakes = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadEarthquakes = useCallback(async ({ silent = false } = {}) => {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const res = await getAllEarthquakes(filters.minMag, filters.after, page);
       setEarthquakes(res.data.content);
       setTotalPages(res.data.totalPages);
       setTotalElements(res.data.totalElements);
+      setLastUpdated(new Date());
     } catch {
-      setError('Failed to load earthquakes');
+      // A silent background poll shouldn't clobber what the user sees on screen
+      // with an error banner — just log it and try again on the next tick.
+      if (!silent) setError('Failed to load earthquakes');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
+      inFlightRef.current = false;
     }
   }, [filters, page]);
 
+  // Keep a ref to the latest loader so the polling interval can call it
+  // without being torn down and rebuilt every time filters/page change.
+  useEffect(() => {
+    loaderRef.current = loadEarthquakes;
+  }, [loadEarthquakes]);
+
+  // Initial load + reload on filter/page change.
   useEffect(() => {
     loadEarthquakes();
   }, [loadEarthquakes]);
+
+  // Auto-refresh every POLL_INTERVAL_MS. Pauses when the tab is hidden
+  // and fires an immediate refresh when it becomes visible again.
+  useEffect(() => {
+    const tick = () => {
+      if (document.visibilityState === 'visible') {
+        loaderRef.current?.({ silent: true });
+      }
+    };
+    const id = setInterval(tick, POLL_INTERVAL_MS);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        loaderRef.current?.({ silent: true });
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, []);
 
   function handleApplyFilters(newFilters) {
     setPage(0);
@@ -87,7 +133,15 @@ function App() {
         >
           Export CSV
         </button>
-        <span className="text-muted ms-auto">{totalElements} earthquakes total</span>
+        <span className="text-muted ms-auto small">
+          {totalElements} earthquakes total
+          {lastUpdated && (
+            <span className="ms-3">
+              Auto-refresh: every 60s · Updated{' '}
+              {lastUpdated.toLocaleTimeString()}
+            </span>
+          )}
+        </span>
       </div>
       {view === 'table' ? (
         <>

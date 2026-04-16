@@ -8,6 +8,7 @@
 /Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/main/java/com/earthquakedata/app/exception/GlobalExceptionHandler.java
 /Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/main/java/com/earthquakedata/app/model/Earthquake.java
 /Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/main/java/com/earthquakedata/app/repository/EarthquakeRepository.java
+/Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/main/java/com/earthquakedata/app/service/EarthquakePollingScheduler.java
 /Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/main/java/com/earthquakedata/app/service/EarthquakeService.java
 /Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/main/java/com/earthquakedata/app/service/EarthquakeServiceImpl.java
 /Users/ognentrajkovski/Desktop/EarthquakeDataManagementApplication/backend/src/main/java/com/earthquakedata/app/service/UsgsApiService.java
