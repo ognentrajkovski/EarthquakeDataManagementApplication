@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { fetchLatest } from '../api/earthquakeApi';
 
-export default function Navbar({ onRefresh }) {
+export default function Navbar({ onRefresh, showToast }) {
   const [loading, setLoading] = useState(false);
 
   async function handleFetch() {
     setLoading(true);
     try {
       const res = await fetchLatest();
-      alert(`Fetched ${res.data.count} earthquakes from USGS`);
+      showToast(`Fetched ${res.data.count} earthquakes from USGS`, 'success');
       onRefresh();
     } catch {
-      alert('Failed to fetch latest earthquake data');
+      showToast('Failed to fetch latest earthquake data');
     } finally {
       setLoading(false);
     }

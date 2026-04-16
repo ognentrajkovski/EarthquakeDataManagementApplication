@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import FilterBar from './components/FilterBar';
 import EarthquakeTable from './components/EarthquakeTable';
 import EarthquakeMap from './components/EarthquakeMap';
+import Toast from './components/Toast';
 import { getAllEarthquakes } from './api/earthquakeApi';
 
 function App() {
@@ -15,6 +16,16 @@ function App() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+  const [toasts, setToasts] = useState([]);
+
+  function showToast(message, type = 'danger') {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, message, type }]);
+  }
+
+  function removeToast(id) {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }
 
   const loadEarthquakes = useCallback(async () => {
     setLoading(true);
@@ -42,7 +53,7 @@ function App() {
 
   return (
     <div>
-      <Navbar onRefresh={loadEarthquakes} />
+      <Navbar onRefresh={loadEarthquakes} showToast={showToast} />
       <FilterBar onApply={handleApplyFilters} />
       <div className="d-flex gap-2 align-items-center p-3">
         <button
@@ -66,6 +77,7 @@ function App() {
             loading={loading}
             error={error}
             onRefresh={loadEarthquakes}
+            showToast={showToast}
           />
           {totalPages > 1 && (
             <nav className="d-flex justify-content-center p-3">
@@ -88,6 +100,17 @@ function App() {
       ) : (
         <EarthquakeMap earthquakes={earthquakes} />
       )}
+
+      <div className="toast-container position-fixed bottom-0 end-0 p-3">
+        {toasts.map((t) => (
+          <Toast
+            key={t.id}
+            message={t.message}
+            type={t.type}
+            onClose={() => removeToast(t.id)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
