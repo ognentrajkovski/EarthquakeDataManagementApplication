@@ -5,6 +5,7 @@ import com.earthquakedata.app.model.Earthquake;
 import com.earthquakedata.app.repository.EarthquakeRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,13 +19,19 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class EarthquakeServiceImpl implements EarthquakeService {
-
-    private static final double MAGNITUDE_THRESHOLD = 2.0;
 
     private final EarthquakeRepository repository;
     private final UsgsApiService usgsApiService;
+    private final double magnitudeThreshold;
+
+    public EarthquakeServiceImpl(EarthquakeRepository repository,
+                                 UsgsApiService usgsApiService,
+                                 @Value("${earthquake.magnitude.threshold}") double magnitudeThreshold) {
+        this.repository = repository;
+        this.usgsApiService = usgsApiService;
+        this.magnitudeThreshold = magnitudeThreshold;
+    }
 
     /**
      * {@inheritDoc}
@@ -36,11 +43,11 @@ public class EarthquakeServiceImpl implements EarthquakeService {
         List<Earthquake> raw = usgsApiService.fetchEarthquakes();
 
         List<Earthquake> filtered = raw.stream()
-                .filter(eq -> eq.getMagnitude() != null && eq.getMagnitude() > MAGNITUDE_THRESHOLD)
+                .filter(eq -> eq.getMagnitude() != null && eq.getMagnitude() > magnitudeThreshold)
                 .toList();
 
         log.info("Filtered {} earthquakes with magnitude > {} from {} total",
-                filtered.size(), MAGNITUDE_THRESHOLD, raw.size());
+                filtered.size(), magnitudeThreshold, raw.size());
 
         List<Earthquake> newEntries = filtered.stream()
                 .filter(eq -> !repository.existsByUsgsId(eq.getUsgsId()))
