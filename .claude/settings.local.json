@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn test:*)",
+      "Bash(java -version)",
+      "Bash(mvn clean:*)",
+      "Bash(mvn dependency:resolve -Dincludes=org.projectlombok:lombok)",
+      "Bash(javac --version)",
+      "Bash(ls backend/target/surefire-reports/*.txt)",
+      "Bash(java -XshowSettings:vm -version)"
+    ]
+  }
+}
