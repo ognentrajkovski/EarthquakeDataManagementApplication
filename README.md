@@ -120,9 +120,7 @@ Covers: CSV export utility, Navbar, FilterBar, Toast, and EarthquakeTable compon
 
 - **Duplicate handling** — The spec says to delete all records before each insert. This implementation instead performs a **upsert-by-USGS-ID** check: records already in the database are skipped rather than deleted and re-inserted. This preserves historical data between polls (e.g. an earthquake from 55 minutes ago stays in the DB even after the USGS hourly feed rotates it out) and avoids unnecessary write churn on every 60-second poll.
 - **Magnitude threshold** — The 2.0 threshold is enforced both at ingestion time (nothing below 2.0 is stored) and at query time (the API never returns sub-threshold records even if they exist in the DB from a previous configuration).
-- **Time storage** — Earthquake times are stored and serialised as `Instant` (UTC, ISO-8601 with `Z` suffix) rather than `LocalDateTime` to prevent browser timezone misinterpretation when displaying times.
-- **Polling vs manual fetch** — The USGS feed is polled automatically every 60 seconds in the background. The "Fetch Latest" button in the UI triggers an additional on-demand poll on top of the scheduled one.
-- **Internet access** — The backend requires outbound HTTPS access to `earthquake.usgs.gov` on port 443. If the external API is unavailable, the scheduled poller logs the error and retries on the next interval without crashing.
+- **Time storage** — Earthquake times are stored and serialised as `Instant` (UTC time) rather than `LocalDateTime` to prevent browser timezone misinterpretation when displaying times.
 
 ---
 
