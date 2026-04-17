@@ -132,7 +132,7 @@ All responses use JSON. Error responses follow a standard error body:
 - `fetchAndStore()`:
   1. Call `UsgsApiService` to get raw list
   2. Filter: keep only `magnitude > 2.0`
-  3. `repository.deleteAll()` — wipe existing records
+  3. Skip existing records based on usgsId
   4. Save filtered list via `repository.saveAll()`
   5. Return saved count
 - `findAll(Optional<Double> minMag, Optional<Long> afterEpoch)`:

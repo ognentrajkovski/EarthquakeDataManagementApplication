@@ -11,8 +11,6 @@ import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -53,7 +51,7 @@ public class UsgsApiService {
             return Collections.emptyList();
         }
 
-        LocalDateTime fetchedAt = LocalDateTime.now(ZoneOffset.UTC);
+        Instant fetchedAt = Instant.now();
 
         List<Earthquake> earthquakes = response.getFeatures().stream()
                 .map(feature -> {
@@ -78,7 +76,7 @@ public class UsgsApiService {
      * @param fetchedAt the timestamp to record as the fetch time
      * @return the mapped entity, or {@code null} if the feature is malformed
      */
-    private Earthquake mapFeatureToEarthquake(GeoJsonResponse.Feature feature, LocalDateTime fetchedAt) {
+    private Earthquake mapFeatureToEarthquake(GeoJsonResponse.Feature feature, Instant fetchedAt) {
         if (feature.getProperties() == null) {
             log.warn("Skipping feature [id={}]: missing properties", feature.getId());
             return null;
@@ -93,10 +91,9 @@ public class UsgsApiService {
         GeoJsonResponse.Properties props = feature.getProperties();
         List<Double> coords = feature.getGeometry().getCoordinates();
 
-        LocalDateTime time = null;
-        if (props.getTime() != null) {
-            time = LocalDateTime.ofInstant(Instant.ofEpochMilli(props.getTime()), ZoneOffset.UTC);
-        }
+        Instant time = props.getTime() != null
+                ? Instant.ofEpochMilli(props.getTime())
+                : null;
 
         return Earthquake.builder()
                 .usgsId(feature.getId())

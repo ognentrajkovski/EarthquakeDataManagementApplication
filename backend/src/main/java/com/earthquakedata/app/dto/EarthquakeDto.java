@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
 @Builder
@@ -20,11 +20,11 @@ public class EarthquakeDto {
     private String magType;
     private String place;
     private String title;
-    private LocalDateTime time;
+    private Instant time;
     private Double latitude;
     private Double longitude;
     private Double depth;
-    private LocalDateTime fetchedAt;
+    private Instant fetchedAt;
 
     public static EarthquakeDto fromEntity(Earthquake entity) {
         return EarthquakeDto.builder()

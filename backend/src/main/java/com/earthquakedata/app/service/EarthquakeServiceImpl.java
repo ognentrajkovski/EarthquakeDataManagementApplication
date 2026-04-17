@@ -12,8 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 
@@ -66,18 +64,19 @@ public class EarthquakeServiceImpl implements EarthquakeService {
     @Override
     @Transactional(readOnly = true)
     public Page<Earthquake> findAll(Optional<Double> minMag, Optional<Long> afterEpoch, Pageable pageable) {
-        Optional<LocalDateTime> afterTime = afterEpoch.map(epoch ->
-                LocalDateTime.ofInstant(Instant.ofEpochMilli(epoch), ZoneOffset.UTC));
+        Optional<Instant> afterTime = afterEpoch.map(Instant::ofEpochMilli);
 
-        if (minMag.isPresent() && afterTime.isPresent()) {
-            return repository.findByMagnitudeGreaterThanEqualAndTimeAfter(minMag.get(), afterTime.get(), pageable);
-        } else if (minMag.isPresent()) {
-            return repository.findByMagnitudeGreaterThanEqual(minMag.get(), pageable);
-        } else if (afterTime.isPresent()) {
-            return repository.findByTimeAfter(afterTime.get(), pageable);
+        // Always enforce the configured threshold as a floor so sub-threshold
+        // records (e.g. ingested before the filter was in place) are never served.
+        double effectiveMin = minMag.isPresent()
+                ? Math.max(minMag.get(), magnitudeThreshold)
+                : magnitudeThreshold;
+
+        if (afterTime.isPresent()) {
+            return repository.findByMagnitudeGreaterThanEqualAndTimeAfter(effectiveMin, afterTime.get(), pageable);
         }
 
-        return repository.findAll(pageable);
+        return repository.findByMagnitudeGreaterThanEqual(effectiveMin, pageable);
     }
 
     /**

@@ -1,17 +1,23 @@
 import { useState, useMemo } from 'react';
 import { deleteEarthquake } from '../api/earthquakeApi';
+import { getSeverity } from '../utils/severity';
+import SeverityBadge from './SeverityBadge';
 
 const SORTABLE_COLUMNS = [
-  { key: 'title', label: 'Title' },
-  { key: 'magnitude', label: 'Magnitude' },
-  { key: 'magType', label: 'Mag Type' },
-  { key: 'place', label: 'Place' },
-  { key: 'time', label: 'Time (UTC)' },
-  { key: 'latitude', label: 'Lat' },
-  { key: 'longitude', label: 'Lon' },
-  { key: 'depth', label: 'Depth' },
+  { key: 'title',     label: 'Title' },
+  { key: 'magnitude', label: 'Magnitude', align: 'right' },
+  { key: 'magType',   label: 'Mag Type' },
+  { key: 'place',     label: 'Place' },
+  { key: 'time',      label: 'Time (UTC)' },
+  { key: 'latitude',  label: 'Lat',   align: 'right', mono: true },
+  { key: 'longitude', label: 'Lon',   align: 'right', mono: true },
+  { key: 'depth',     label: 'Depth', align: 'right', mono: true },
 ];
 
+/**
+ * Data table view. Preserves the same outer API (loading / error / empty
+ * states + Delete confirm flow) expected by tests.
+ */
 export default function EarthquakeTable({ earthquakes, loading, error, onRefresh, showToast }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortAsc, setSortAsc] = useState(true);
@@ -19,7 +25,7 @@ export default function EarthquakeTable({ earthquakes, loading, error, onRefresh
 
   function handleSort(key) {
     if (sortKey === key) {
-      setSortAsc(!sortAsc);
+      setSortAsc((asc) => !asc);
     } else {
       setSortKey(key);
       setSortAsc(true);
@@ -53,8 +59,9 @@ export default function EarthquakeTable({ earthquakes, loading, error, onRefresh
 
   if (loading) {
     return (
-      <div className="d-flex justify-content-center p-5">
-        <div className="spinner-border" role="status">
+      <div className="state-center" role="status">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'center' }}>
+          <div className="spinner" />
           <span className="visually-hidden">Loading...</span>
         </div>
       </div>
@@ -62,79 +69,97 @@ export default function EarthquakeTable({ earthquakes, loading, error, onRefresh
   }
 
   if (error) {
-    return (
-      <div className="alert alert-danger m-3" role="alert">
-        {error}
-      </div>
-    );
+    return <div className="alert-inline" role="alert">{error}</div>;
   }
 
   if (earthquakes.length === 0) {
-    return <p className="text-center p-3 text-muted">No earthquakes to display.</p>;
+    return <div className="state-center">No earthquakes to display.</div>;
   }
 
   function sortIndicator(key) {
-    if (sortKey !== key) return '';
-    return sortAsc ? ' \u25B2' : ' \u25BC';
+    if (sortKey !== key) return null;
+    return <span aria-hidden style={{ marginLeft: 4 }}>{sortAsc ? '▲' : '▼'}</span>;
   }
 
   return (
-    <div className="table-responsive">
-      <table className="table table-striped table-hover mb-0">
-        <thead className="table-dark">
+    <div className="data-table-wrap">
+      <table className="data-table">
+        <thead>
           <tr>
             {SORTABLE_COLUMNS.map((col) => (
               <th
                 key={col.key}
-                style={{ cursor: 'pointer', userSelect: 'none' }}
                 onClick={() => handleSort(col.key)}
+                style={{ textAlign: col.align ?? 'left' }}
+                aria-sort={
+                  sortKey === col.key ? (sortAsc ? 'ascending' : 'descending') : 'none'
+                }
               >
                 {col.label}{sortIndicator(col.key)}
               </th>
             ))}
-            <th></th>
+            <th>Severity</th>
+            <th aria-label="Actions"></th>
           </tr>
         </thead>
         <tbody>
-          {sorted.map((eq) => (
-            <tr key={eq.id}>
-              <td>{eq.title}</td>
-              <td>{eq.magnitude}</td>
-              <td>{eq.magType}</td>
-              <td>{eq.place}</td>
-              <td>{eq.time ? new Date(eq.time).toLocaleString('en-US', { timeZone: 'UTC' }) : '-'}</td>
-              <td>{eq.latitude}</td>
-              <td>{eq.longitude}</td>
-              <td>{eq.depth}</td>
-              <td>
-                {confirmId === eq.id ? (
-                  <div className="d-flex gap-1">
+          {sorted.map((eq) => {
+            const sev = getSeverity(eq.magnitude);
+            return (
+              <tr key={eq.id}>
+                <td>{eq.title}</td>
+                <td className="mono" style={{ textAlign: 'right', color: sev.color, fontWeight: 600 }}>
+                  {eq.magnitude != null ? Number(eq.magnitude).toFixed(1) : '—'}
+                </td>
+                <td className="text-muted-2" style={{ textTransform: 'uppercase', fontSize: '0.75rem' }}>
+                  {eq.magType}
+                </td>
+                <td>{eq.place}</td>
+                <td className="mono">
+                  {eq.time ? new Date(eq.time).toLocaleString('en-US', { timeZone: 'UTC' }) : '-'}
+                </td>
+                <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.latitude)}</td>
+                <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.longitude)}</td>
+                <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.depth)}</td>
+                <td><SeverityBadge magnitude={eq.magnitude} /></td>
+                <td style={{ textAlign: 'right' }}>
+                  {confirmId === eq.id ? (
+                    <div style={{ display: 'inline-flex', gap: 4 }}>
+                      <button
+                        type="button"
+                        className="btn-action btn-action-sm btn-action-danger-ghost"
+                        onClick={() => handleDelete(eq.id)}
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-action btn-action-sm btn-action-ghost"
+                        onClick={() => setConfirmId(null)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
                     <button
-                      className="btn btn-sm btn-danger"
-                      onClick={() => handleDelete(eq.id)}
+                      type="button"
+                      className="btn-action btn-action-sm btn-action-ghost"
+                      onClick={() => setConfirmId(eq.id)}
                     >
-                      Confirm
+                      Delete
                     </button>
-                    <button
-                      className="btn btn-sm btn-outline-secondary"
-                      onClick={() => setConfirmId(null)}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    className="btn btn-sm btn-outline-danger"
-                    onClick={() => setConfirmId(eq.id)}
-                  >
-                    Delete
-                  </button>
-                )}
-              </td>
-            </tr>
-          ))}
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
   );
+}
+
+function fmt(n) {
+  if (n == null) return '—';
+  return Number(n).toFixed(2);
 }

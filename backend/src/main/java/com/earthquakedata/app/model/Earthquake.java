@@ -6,7 +6,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "earthquakes")
@@ -34,7 +34,7 @@ public class Earthquake {
     @Column(length = 512)
     private String title;
 
-    private LocalDateTime time;
+    private Instant time;
 
     private Double latitude;
 
@@ -43,5 +43,5 @@ public class Earthquake {
     private Double depth;
 
     @Column(name = "fetched_at")
-    private LocalDateTime fetchedAt;
+    private Instant fetchedAt;
 }

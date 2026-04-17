@@ -12,8 +12,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -34,8 +33,8 @@ class EarthquakeServiceIntegrationTest {
     @MockitoBean
     private UsgsApiService usgsApiService;
 
-    private static final LocalDateTime TIME_OLD = LocalDateTime.of(2024, 1, 1, 0, 0, 0);
-    private static final LocalDateTime TIME_RECENT = LocalDateTime.of(2025, 6, 15, 12, 0, 0);
+    private static final Instant TIME_OLD    = Instant.parse("2024-01-01T00:00:00Z");
+    private static final Instant TIME_RECENT = Instant.parse("2025-06-15T12:00:00Z");
 
     @BeforeEach
     void setUp() {
@@ -119,19 +118,15 @@ class EarthquakeServiceIntegrationTest {
 
     @Test
     void findAll_withAfterEpochFilter_returnsCorrectSubset() {
-        LocalDateTime before = LocalDateTime.of(2024, 1, 1, 0, 0);
-        LocalDateTime after = LocalDateTime.of(2025, 6, 1, 0, 0);
-
         repository.saveAll(List.of(
-                Earthquake.builder().usgsId("old").magnitude(3.0).time(before)
-                        .latitude(0.0).longitude(0.0).depth(0.0).fetchedAt(before).build(),
-                Earthquake.builder().usgsId("new").magnitude(3.0).time(after)
-                        .latitude(0.0).longitude(0.0).depth(0.0).fetchedAt(after).build()
+                Earthquake.builder().usgsId("old").magnitude(3.0).time(TIME_OLD)
+                        .latitude(0.0).longitude(0.0).depth(0.0).fetchedAt(TIME_OLD).build(),
+                Earthquake.builder().usgsId("new").magnitude(3.0).time(TIME_RECENT)
+                        .latitude(0.0).longitude(0.0).depth(0.0).fetchedAt(TIME_RECENT).build()
         ));
 
-        // Epoch ms for a date between the two: 2025-01-01T00:00:00 UTC
-        long cutoffEpoch = LocalDateTime.of(2025, 1, 1, 0, 0)
-                .toInstant(ZoneOffset.UTC).toEpochMilli();
+        // Cutoff between the two: 2025-01-01T00:00:00Z
+        long cutoffEpoch = Instant.parse("2025-01-01T00:00:00Z").toEpochMilli();
 
         Page<Earthquake> result = earthquakeService.findAll(Optional.empty(), Optional.of(cutoffEpoch), PageRequest.of(0, 20));
 

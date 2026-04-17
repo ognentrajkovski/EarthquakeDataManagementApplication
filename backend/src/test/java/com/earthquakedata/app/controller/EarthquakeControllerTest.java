@@ -13,7 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 import static org.hamcrest.Matchers.hasSize;
@@ -34,7 +34,7 @@ class EarthquakeControllerTest {
     @MockitoBean
     private EarthquakeService earthquakeService;
 
-    private static final LocalDateTime NOW = LocalDateTime.of(2025, 6, 15, 12, 0, 0);
+    private static final Instant NOW = Instant.parse("2025-06-15T12:00:00Z");
 
     private Earthquake sampleEarthquake(Long id) {
         return Earthquake.builder()

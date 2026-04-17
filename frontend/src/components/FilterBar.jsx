@@ -1,5 +1,9 @@
 import { useState } from 'react';
 
+/**
+ * Magnitude / time filter controls.
+ * Emits `{ minMag, after }` up to the parent on Apply or Clear.
+ */
 export default function FilterBar({ onApply }) {
   const [minMag, setMinMag] = useState('');
   const [after, setAfter] = useState('');
@@ -15,33 +19,39 @@ export default function FilterBar({ onApply }) {
   }
 
   return (
-    <div className="d-flex gap-3 align-items-end p-3 bg-light border-bottom">
-      <div>
-        <label className="form-label mb-1">Min Magnitude</label>
+    <div className="filter-bar" role="search" aria-label="Earthquake filters">
+      <div className="form-field">
+        <label htmlFor="flt-min-mag">Min Magnitude</label>
         <input
+          id="flt-min-mag"
           type="number"
-          className="form-control"
+          className="form-control-dark"
           step="0.1"
           value={minMag}
           onChange={(e) => setMinMag(e.target.value)}
           placeholder="e.g. 2.5"
         />
       </div>
-      <div>
-        <label className="form-label mb-1">After Time (Local)</label>
+
+      <div className="form-field">
+        <label htmlFor="flt-after">After Time (Local)</label>
         <input
+          id="flt-after"
           type="datetime-local"
-          className="form-control"
+          className="form-control-dark"
           value={after}
           onChange={(e) => setAfter(e.target.value)}
         />
       </div>
-      <button className="btn btn-primary" onClick={handleApply}>
-        Apply Filters
-      </button>
-      <button className="btn btn-outline-secondary" onClick={handleClear}>
-        Clear
-      </button>
+
+      <div style={{ display: 'flex', gap: '0.5rem' }}>
+        <button type="button" className="btn-action btn-action-primary" onClick={handleApply}>
+          Apply Filters
+        </button>
+        <button type="button" className="btn-action btn-action-ghost" onClick={handleClear}>
+          Clear
+        </button>
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 com/earthquakedata/app/config/AppConfig$1.class
 com/earthquakedata/app/exception/EarthquakeNotFoundException.class
+com/earthquakedata/app/service/EarthquakePollingScheduler.class
 com/earthquakedata/app/service/EarthquakeServiceImpl.class
 com/earthquakedata/app/dto/GeoJsonResponse.class
 com/earthquakedata/app/dto/EarthquakeDto.class

@@ -1,10 +1,52 @@
-version: "3.9"
 services:
   postgres:
     image: postgres:15
+    container_name: earthquake-postgres
     environment:
       POSTGRES_DB: earthquakedb
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
+    volumes:
+      - earthquake-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d earthquakedb"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    container_name: earthquake-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Override the defaults in application.properties so the app points at
+      # the postgres service rather than localhost.
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/earthquakedb
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: postgres
+      # Allow the dockerized frontend (served by nginx on :5173) and the
+      # Vite dev server to hit the API.
+      SPRING_WEB_CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # The browser (not the container) calls the API, so the host port is
+        # what matters. Override at build time if hosting elsewhere.
+        VITE_API_URL: http://localhost:8080
+    container_name: earthquake-frontend
+    depends_on:
+      - backend
+    ports:
+      - "5173:80"
+
+volumes:
+  earthquake-pgdata:

@@ -16,7 +16,19 @@
       "Bash(/opt/homebrew/bin/npm install:*)",
       "Bash(/opt/homebrew/bin/npx vitest:*)",
       "Bash(npx vitest:*)",
-      "Bash(mvn -q test)"
+      "Bash(mvn -q test)",
+      "Bash(docker compose:*)",
+      "Bash(DOCKER_BUILDKIT=1 docker compose build backend)",
+      "Bash(DOCKER_BUILDKIT=1 docker compose build frontend)",
+      "Bash(mvn -q -e -B test)",
+      "Bash(mvn -B test)",
+      "Bash(mvn -B clean test)",
+      "Bash(mvn -version)",
+      "Bash(node -version)",
+      "Bash(npm -version)",
+      "Bash(docker -version)",
+      "Bash(npm --version)",
+      "Bash(docker --version)"
     ]
   }
 }
