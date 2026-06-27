@@ -9,33 +9,29 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class EarthquakeServiceImpl implements EarthquakeService {
+
+    /** Minimum magnitude to persist — wired from application properties. */
+    @Value("${earthquake.magnitude.threshold:2.0}")
+    private double magnitudeThreshold;
 
     private final EarthquakeRepository repository;
     private final UsgsApiService usgsApiService;
-    private final double magnitudeThreshold;
-
-    public EarthquakeServiceImpl(EarthquakeRepository repository,
-                                 UsgsApiService usgsApiService,
-                                 @Value("${earthquake.magnitude.threshold}") double magnitudeThreshold) {
-        this.repository = repository;
-        this.usgsApiService = usgsApiService;
-        this.magnitudeThreshold = magnitudeThreshold;
-    }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    @Transactional
     public int fetchAndStore() {
         log.info("Fetching earthquake data from USGS API");
         List<Earthquake> raw = usgsApiService.fetchEarthquakes();
@@ -47,8 +43,18 @@ public class EarthquakeServiceImpl implements EarthquakeService {
         log.info("Filtered {} earthquakes with magnitude > {} from {} total",
                 filtered.size(), magnitudeThreshold, raw.size());
 
+        // --- Single-query duplicate check (eliminates N+1 pattern) ---
+        Set<String> incomingUsgsIds = filtered.stream()
+                .map(Earthquake::getUsgsId)
+                .collect(Collectors.toSet());
+
+        Set<String> existingUsgsIds = repository.findByUsgsIdIn(incomingUsgsIds)
+                .stream()
+                .map(Earthquake::getUsgsId)
+                .collect(Collectors.toSet());
+
         List<Earthquake> newEntries = filtered.stream()
-                .filter(eq -> !repository.existsByUsgsId(eq.getUsgsId()))
+                .filter(eq -> !existingUsgsIds.contains(eq.getUsgsId()))
                 .toList();
 
         List<Earthquake> saved = repository.saveAll(newEntries);
@@ -62,29 +68,25 @@ public class EarthquakeServiceImpl implements EarthquakeService {
      * {@inheritDoc}
      */
     @Override
-    @Transactional(readOnly = true)
     public Page<Earthquake> findAll(Optional<Double> minMag, Optional<Long> afterEpoch, Pageable pageable) {
         Optional<Instant> afterTime = afterEpoch.map(Instant::ofEpochMilli);
 
-        // Always enforce the configured threshold as a floor so sub-threshold
-        // records (e.g. ingested before the filter was in place) are never served.
-        double effectiveMin = minMag.isPresent()
-                ? Math.max(minMag.get(), magnitudeThreshold)
-                : magnitudeThreshold;
-
-        if (afterTime.isPresent()) {
-            return repository.findByMagnitudeGreaterThanEqualAndTimeAfter(effectiveMin, afterTime.get(), pageable);
+        if (minMag.isPresent() && afterTime.isPresent()) {
+            return repository.findByMagnitudeGreaterThanEqualAndTimeAfter(minMag.get(), afterTime.get(), pageable);
+        } else if (minMag.isPresent()) {
+            return repository.findByMagnitudeGreaterThanEqual(minMag.get(), pageable);
+        } else if (afterTime.isPresent()) {
+            return repository.findByTimeAfter(afterTime.get(), pageable);
         }
 
-        return repository.findByMagnitudeGreaterThanEqual(effectiveMin, pageable);
+        return repository.findAll(pageable);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    @Transactional(readOnly = true)
-    public Earthquake findById(Long id) {
+    public Earthquake findById(String id) {
         return repository.findById(id)
                 .orElseThrow(() -> new EarthquakeNotFoundException(id));
     }
@@ -93,8 +95,7 @@ public class EarthquakeServiceImpl implements EarthquakeService {
      * {@inheritDoc}
      */
     @Override
-    @Transactional
-    public void deleteById(Long id) {
+    public void deleteById(String id) {
         if (!repository.existsById(id)) {
             throw new EarthquakeNotFoundException(id);
         }

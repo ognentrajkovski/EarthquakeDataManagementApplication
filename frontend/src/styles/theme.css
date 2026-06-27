@@ -569,6 +569,16 @@ button {
   cursor: pointer;
 }
 .form-control-dark::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+.form-control-dark.input-error {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+.field-error {
+  font-size: 0.68rem;
+  color: var(--danger);
+  font-weight: 500;
+  margin-top: 0.15rem;
+}
 
 /* ---------- Event list ---------- */
 

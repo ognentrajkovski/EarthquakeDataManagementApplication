@@ -118,9 +118,14 @@ Covers: CSV export utility, Navbar, FilterBar, Toast, and EarthquakeTable compon
 
 ## Assumptions
 
+<<<<<<< HEAD
 - **Duplicate handling** — The spec says to delete all records before each insert. This implementation instead performs a **upsert-by-USGS-ID** check: records already in the database are skipped rather than deleted and re-inserted. This preserves historical data between polls (e.g. an earthquake from 55 minutes ago stays in the DB even after the USGS hourly feed rotates it out) and avoids unnecessary write churn on every 60-second poll.
 - **Magnitude threshold** — The 2.0 threshold is enforced both at ingestion time (nothing below 2.0 is stored) and at query time (the API never returns sub-threshold records even if they exist in the DB from a previous configuration).
 - **Time storage** — Earthquake times are stored and serialised as `Instant` (UTC time) rather than `LocalDateTime` to prevent browser timezone misinterpretation when displaying times.
+=======
+- **Duplicate handling** — The file for the task says to delete all records before each insert. This implementation instead performs a **USGS-ID** check: records already in the database are skipped rather than deleted and re-inserted. This preserves historical data between polls (e.g. an earthquake from 55 minutes ago stays in the DB even after the USGS hourly feed rotates it out) and avoids unnecessary write churn on every 60-second poll.
+- **Time storage** — Earthquake times are stored and serialised as `Instant` (UTC, ISO-8601 with `Z` suffix) rather than `LocalDateTime` to prevent browser timezone misinterpretation when displaying times.
+>>>>>>> 1936024 (Refactor project)
 
 ---
 
@@ -138,7 +143,7 @@ The following items go beyond the minimum requirements of the assignment:
 | **Filtering in UI** | Filter bar allows narrowing results by minimum magnitude and a start date/time — passed as query parameters to the backend. |
 | **CSV export** | Current page of results can be downloaded as a CSV file. |
 | **Dashboard layout** | Three views (Dashboard, Map, Table) accessible from a sidebar. Dashboard shows the map and event list side by side. |
-| **Docker Compose** | Full stack (PostgreSQL + backend + backend + frontend via nginx) starts with `docker compose up --build`. |
+| **Docker Compose** | Full stack (PostgreSQL + backend + frontend via nginx). |
 | **Dockerized frontend** | Vite builds a static bundle served by nginx with SPA fallback and long-cache headers for hashed assets. |
 | **Extra fields extracted** | Beyond the required fields, `latitude`, `longitude`, `depth`, `magType`, and `fetchedAt` are also extracted, stored and displayed. |
 | **Exception handling** | `GlobalExceptionHandler` returns structured JSON error responses. Malformed GeoJSON features are skipped with a warning log rather than failing the entire fetch. |

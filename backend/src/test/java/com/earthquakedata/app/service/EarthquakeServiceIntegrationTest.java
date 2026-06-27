@@ -148,7 +148,7 @@ class EarthquakeServiceIntegrationTest {
 
     @Test
     void findById_notFound_throwsException() {
-        assertThatThrownBy(() -> earthquakeService.findById(999L))
+        assertThatThrownBy(() -> earthquakeService.findById("000000000000000000000000"))
                 .isInstanceOf(EarthquakeNotFoundException.class);
     }
 
@@ -166,7 +166,7 @@ class EarthquakeServiceIntegrationTest {
 
     @Test
     void deleteById_notFound_throwsException() {
-        assertThatThrownBy(() -> earthquakeService.deleteById(999L))
+        assertThatThrownBy(() -> earthquakeService.deleteById("000000000000000000000000"))
                 .isInstanceOf(EarthquakeNotFoundException.class);
     }
 }

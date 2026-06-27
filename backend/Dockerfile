@@ -11,7 +11,7 @@ COPY src ./src
 # Much faster than `dependency:go-offline` and doesn't force-resolve every
 # plugin/profile up front.
 RUN --mount=type=cache,target=/root/.m2 \
-    mvn -q -e -B -DskipTests package \
+    mvn -q -e -B -Dmaven.test.skip=true package \
  && cp target/*.jar app.jar
 
 # ---- Runtime stage --------------------------------------------------------

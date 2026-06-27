@@ -10,15 +10,16 @@ public interface EarthquakeService {
 
     /**
      * Fetches earthquake data from the USGS API, filters entries with
-     * magnitude greater than 2.0, replaces all existing records in the
-     * database with the filtered set, and returns the number of saved records.
+     * magnitude greater than the configured threshold, skips entries
+     * already present in the database, and returns the number of newly
+     * saved records.
      *
      * @return the count of earthquakes saved after filtering
      */
     int fetchAndStore();
 
     /**
-     * Returns all stored earthquakes, optionally filtered by minimum
+     * Returns a page of stored earthquakes, optionally filtered by minimum
      * magnitude and/or a minimum time threshold.
      *
      * @param minMag     if present, only earthquakes with magnitude &ge; this value are returned
@@ -31,17 +32,17 @@ public interface EarthquakeService {
     /**
      * Retrieves a single earthquake by its database ID.
      *
-     * @param id the database primary key
+     * @param id the database primary key (MongoDB ObjectId string)
      * @return the matching earthquake
      * @throws com.earthquakedata.app.exception.EarthquakeNotFoundException if no record exists for the given ID
      */
-    Earthquake findById(Long id);
+    Earthquake findById(String id);
 
     /**
      * Deletes a single earthquake by its database ID.
      *
-     * @param id the database primary key
+     * @param id the database primary key (MongoDB ObjectId string)
      * @throws com.earthquakedata.app.exception.EarthquakeNotFoundException if no record exists for the given ID
      */
-    void deleteById(Long id);
+    void deleteById(String id);
 }

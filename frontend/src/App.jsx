@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/theme.css';
+import { POLL_INTERVAL_MS } from './constants';
 
 import Sidebar from './components/Sidebar';
 import Navbar from './components/Navbar';
@@ -12,9 +13,6 @@ import Toast from './components/Toast';
 
 import { getAllEarthquakes } from './api/earthquakeApi';
 import { downloadCsv } from './utils/csvExport';
-
-/** Must match `earthquake.polling.interval-ms` on the backend. */
-const POLL_INTERVAL_MS = 60_000;
 
 export default function App() {
   /* -------------- data / request state -------------- */

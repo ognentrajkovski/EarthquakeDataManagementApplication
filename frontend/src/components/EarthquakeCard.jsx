@@ -1,5 +1,4 @@
-import { useState } from 'react';
-import { deleteEarthquake } from '../api/earthquakeApi';
+import { useDeleteEarthquake } from '../hooks/useDeleteEarthquake';
 import { getSeverity } from '../utils/severity';
 import SeverityBadge from './SeverityBadge';
 
@@ -16,24 +15,11 @@ import SeverityBadge from './SeverityBadge';
  *   └─────────────────────────────────────────────────┘
  */
 export default function EarthquakeCard({ earthquake: eq, onDeleted, showToast, onHover }) {
-  const [confirming, setConfirming] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const { confirming, deleting, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteEarthquake(onDeleted, showToast);
+
   const sev = getSeverity(eq.magnitude);
   const location = eq.place || eq.title || 'Unknown location';
-
-  async function handleDelete() {
-    setDeleting(true);
-    try {
-      await deleteEarthquake(eq.id);
-      showToast('Earthquake deleted', 'success');
-      onDeleted?.();
-    } catch {
-      showToast('Failed to delete earthquake');
-    } finally {
-      setDeleting(false);
-      setConfirming(false);
-    }
-  }
 
   return (
     <article
@@ -72,7 +58,7 @@ export default function EarthquakeCard({ earthquake: eq, onDeleted, showToast, o
               <button
                 type="button"
                 className="btn-action btn-action-sm btn-action-danger-ghost"
-                onClick={handleDelete}
+                onClick={() => confirmDelete(eq.id)}
                 disabled={deleting}
               >
                 {deleting ? '…' : 'Confirm'}
@@ -80,7 +66,7 @@ export default function EarthquakeCard({ earthquake: eq, onDeleted, showToast, o
               <button
                 type="button"
                 className="btn-action btn-action-sm btn-action-ghost"
-                onClick={() => setConfirming(false)}
+                onClick={cancelDelete}
                 disabled={deleting}
               >
                 Cancel
@@ -90,7 +76,7 @@ export default function EarthquakeCard({ earthquake: eq, onDeleted, showToast, o
             <button
               type="button"
               className="btn-action btn-action-sm btn-action-ghost"
-              onClick={() => setConfirming(true)}
+              onClick={requestDelete}
               aria-label={`Delete earthquake ${location}`}
             >
               Delete

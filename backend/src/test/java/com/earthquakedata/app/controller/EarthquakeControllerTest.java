@@ -36,7 +36,8 @@ class EarthquakeControllerTest {
 
     private static final Instant NOW = Instant.parse("2025-06-15T12:00:00Z");
 
-    private Earthquake sampleEarthquake(Long id) {
+    /** MongoDB uses String ObjectIds. */
+    private Earthquake sampleEarthquake(String id) {
         return Earthquake.builder()
                 .id(id)
                 .usgsId("us2025test")
@@ -54,7 +55,7 @@ class EarthquakeControllerTest {
 
     @Test
     void getAll_returns200WithPage() throws Exception {
-        List<Earthquake> list = List.of(sampleEarthquake(1L), sampleEarthquake(2L));
+        List<Earthquake> list = List.of(sampleEarthquake("id1"), sampleEarthquake("id2"));
         PageImpl<Earthquake> page = new PageImpl<>(list, PageRequest.of(0, 20), 2);
         when(earthquakeService.findAll(any(), any(), any())).thenReturn(page);
 
@@ -77,9 +78,9 @@ class EarthquakeControllerTest {
 
     @Test
     void getById_found_returns200() throws Exception {
-        when(earthquakeService.findById(1L)).thenReturn(sampleEarthquake(1L));
+        when(earthquakeService.findById("abc123")).thenReturn(sampleEarthquake("abc123"));
 
-        mockMvc.perform(get("/api/earthquakes/1"))
+        mockMvc.perform(get("/api/earthquakes/abc123"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.usgsId", is("us2025test")))
                 .andExpect(jsonPath("$.magnitude", is(4.5)));
@@ -87,9 +88,9 @@ class EarthquakeControllerTest {
 
     @Test
     void getById_notFound_returns404() throws Exception {
-        when(earthquakeService.findById(999L)).thenThrow(new EarthquakeNotFoundException(999L));
+        when(earthquakeService.findById("notexist")).thenThrow(new EarthquakeNotFoundException("notexist"));
 
-        mockMvc.perform(get("/api/earthquakes/999"))
+        mockMvc.perform(get("/api/earthquakes/notexist"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.message").exists());
@@ -97,19 +98,31 @@ class EarthquakeControllerTest {
 
     @Test
     void deleteById_success_returns204() throws Exception {
-        doNothing().when(earthquakeService).deleteById(1L);
+        doNothing().when(earthquakeService).deleteById("abc123");
 
-        mockMvc.perform(delete("/api/earthquakes/1"))
+        mockMvc.perform(delete("/api/earthquakes/abc123"))
                 .andExpect(status().isNoContent());
     }
 
     @Test
     void deleteById_notFound_returns404() throws Exception {
-        doThrow(new EarthquakeNotFoundException(999L)).when(earthquakeService).deleteById(999L);
+        doThrow(new EarthquakeNotFoundException("notexist")).when(earthquakeService).deleteById("notexist");
 
-        mockMvc.perform(delete("/api/earthquakes/999"))
+        mockMvc.perform(delete("/api/earthquakes/notexist"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status", is(404)))
                 .andExpect(jsonPath("$.message").exists());
+    }
+
+    @Test
+    void getAll_invalidMinMag_returns400() throws Exception {
+        mockMvc.perform(get("/api/earthquakes").param("minMag", "-1"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void getAll_oversizedPage_returns400() throws Exception {
+        mockMvc.perform(get("/api/earthquakes").param("size", "9999"))
+                .andExpect(status().isBadRequest());
     }
 }

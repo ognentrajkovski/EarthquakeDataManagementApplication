@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { deleteEarthquake } from '../api/earthquakeApi';
+import { useDeleteEarthquake } from '../hooks/useDeleteEarthquake';
 import { getSeverity } from '../utils/severity';
 import SeverityBadge from './SeverityBadge';
 
@@ -21,7 +21,7 @@ const SORTABLE_COLUMNS = [
 export default function EarthquakeTable({ earthquakes, loading, error, onRefresh, showToast }) {
   const [sortKey, setSortKey] = useState(null);
   const [sortAsc, setSortAsc] = useState(true);
-  const [confirmId, setConfirmId] = useState(null);
+  const [activeId, setActiveId] = useState(null);
 
   function handleSort(key) {
     if (sortKey === key) {
@@ -44,18 +44,6 @@ export default function EarthquakeTable({ earthquakes, loading, error, onRefresh
       return sortAsc ? cmp : -cmp;
     });
   }, [earthquakes, sortKey, sortAsc]);
-
-  async function handleDelete(id) {
-    try {
-      await deleteEarthquake(id);
-      showToast('Earthquake deleted', 'success');
-      setConfirmId(null);
-      onRefresh();
-    } catch {
-      showToast('Failed to delete earthquake');
-      setConfirmId(null);
-    }
-  }
 
   if (loading) {
     return (
@@ -103,59 +91,77 @@ export default function EarthquakeTable({ earthquakes, loading, error, onRefresh
           </tr>
         </thead>
         <tbody>
-          {sorted.map((eq) => {
-            const sev = getSeverity(eq.magnitude);
-            return (
-              <tr key={eq.id}>
-                <td>{eq.title}</td>
-                <td className="mono" style={{ textAlign: 'right', color: sev.color, fontWeight: 600 }}>
-                  {eq.magnitude != null ? Number(eq.magnitude).toFixed(1) : '—'}
-                </td>
-                <td className="text-muted-2" style={{ textTransform: 'uppercase', fontSize: '0.75rem' }}>
-                  {eq.magType}
-                </td>
-                <td>{eq.place}</td>
-                <td className="mono">
-                  {eq.time ? new Date(eq.time).toLocaleString('en-US', { timeZone: 'UTC' }) : '-'}
-                </td>
-                <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.latitude)}</td>
-                <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.longitude)}</td>
-                <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.depth)}</td>
-                <td><SeverityBadge magnitude={eq.magnitude} /></td>
-                <td style={{ textAlign: 'right' }}>
-                  {confirmId === eq.id ? (
-                    <div style={{ display: 'inline-flex', gap: 4 }}>
-                      <button
-                        type="button"
-                        className="btn-action btn-action-sm btn-action-danger-ghost"
-                        onClick={() => handleDelete(eq.id)}
-                      >
-                        Confirm
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-action btn-action-sm btn-action-ghost"
-                        onClick={() => setConfirmId(null)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn-action btn-action-sm btn-action-ghost"
-                      onClick={() => setConfirmId(eq.id)}
-                    >
-                      Delete
-                    </button>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
+          {sorted.map((eq) => (
+            <TableRow
+              key={eq.id}
+              eq={eq}
+              isActive={activeId === eq.id}
+              onSetActive={setActiveId}
+              onRefresh={onRefresh}
+              showToast={showToast}
+            />
+          ))}
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Isolated row so each row owns its own delete hook state. */
+function TableRow({ eq, onRefresh, showToast }) {
+  const { confirming, deleting, requestDelete, cancelDelete, confirmDelete } =
+    useDeleteEarthquake(onRefresh, showToast);
+
+  const sev = getSeverity(eq.magnitude);
+
+  return (
+    <tr>
+      <td>{eq.title}</td>
+      <td className="mono" style={{ textAlign: 'right', color: sev.color, fontWeight: 600 }}>
+        {eq.magnitude != null ? Number(eq.magnitude).toFixed(1) : '—'}
+      </td>
+      <td className="text-muted-2" style={{ textTransform: 'uppercase', fontSize: '0.75rem' }}>
+        {eq.magType}
+      </td>
+      <td>{eq.place}</td>
+      <td className="mono">
+        {eq.time ? new Date(eq.time).toLocaleString('en-US', { timeZone: 'UTC' }) : '-'}
+      </td>
+      <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.latitude)}</td>
+      <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.longitude)}</td>
+      <td className="mono" style={{ textAlign: 'right' }}>{fmt(eq.depth)}</td>
+      <td><SeverityBadge magnitude={eq.magnitude} /></td>
+      <td style={{ textAlign: 'right' }}>
+        {confirming ? (
+          <div style={{ display: 'inline-flex', gap: 4 }}>
+            <button
+              type="button"
+              className="btn-action btn-action-sm btn-action-danger-ghost"
+              onClick={() => confirmDelete(eq.id)}
+              disabled={deleting}
+            >
+              {deleting ? '…' : 'Confirm'}
+            </button>
+            <button
+              type="button"
+              className="btn-action btn-action-sm btn-action-ghost"
+              onClick={cancelDelete}
+              disabled={deleting}
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn-action btn-action-sm btn-action-ghost"
+            onClick={requestDelete}
+          >
+            Delete
+          </button>
+        )}
+      </td>
+    </tr>
   );
 }
 

@@ -14,7 +14,8 @@ import java.time.Instant;
 @AllArgsConstructor
 public class EarthquakeDto {
 
-    private Long id;
+    /** MongoDB ObjectId — represented as a hex string on the wire. */
+    private String id;
     private String usgsId;
     private Double magnitude;
     private String magType;

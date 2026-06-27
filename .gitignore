@@ -1,0 +1,68 @@
+# ── Java / Maven ──────────────────────────────────────────────────────────────
+target/
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+hs_err_pid*
+replay_pid*
+
+# ── Spring Boot ───────────────────────────────────────────────────────────────
+spring-shell.log
+
+# ── Node / npm ────────────────────────────────────────────────────────────────
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── Vite / React build output ─────────────────────────────────────────────────
+frontend/dist/
+frontend/.vite/
+
+# ── Environment files (may contain secrets) ───────────────────────────────────
+.env
+.env.local
+.env.*.local
+
+# ── IDEs ──────────────────────────────────────────────────────────────────────
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+bin/
+
+# NetBeans
+nbproject/
+nbbuild/
+nbdist/
+.nb-gradle/
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# ── Test / coverage reports ───────────────────────────────────────────────────
+coverage/
+frontend/coverage/
+backend/target/surefire-reports/
+
+# ── Docker ────────────────────────────────────────────────────────────────────
+# Keep Dockerfile and docker-compose.yml tracked; ignore local override files
+docker-compose.override.yml
