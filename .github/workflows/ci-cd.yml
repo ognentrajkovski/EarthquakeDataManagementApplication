@@ -1,0 +1,92 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-backend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-backend:${{ github.sha }}
+
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          build-args: |
+            VITE_API_URL=/api
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-frontend:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-frontend:${{ github.sha }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Copy K8s Manifests to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "k8s/"
+          target: "/home/ec2-user/"
+
+      - name: Execute Deployment on EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ec2-user
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Check if k3d is installed
+            if ! command -v k3d &> /dev/null; then
+              echo "Installing k3d..."
+              curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
+            fi
+            
+            # Check if kubectl is installed
+            if ! command -v kubectl &> /dev/null; then
+              echo "Installing kubectl..."
+              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+              sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+            fi
+
+            # Check if the cluster exists, if not create it
+            if ! k3d cluster list earthquake-cluster &> /dev/null; then
+              echo "Creating k3d cluster..."
+              # Map port 80 of the host to port 80 of the k3d loadbalancer (which feeds to Ingress)
+              k3d cluster create earthquake-cluster -p "80:80@loadbalancer"
+            fi
+
+            cd /home/ec2-user
+            
+            # Apply Kubernetes manifests
+            kubectl apply -f k8s/namespace.yaml
+            kubectl apply -f k8s/
+            
+            # Restart deployments to pull the latest image
+            kubectl rollout restart deployment backend -n earthquake-app
+            kubectl rollout restart deployment frontend -n earthquake-app

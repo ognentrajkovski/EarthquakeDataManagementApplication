@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: earthquake-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          # This image will be updated by the CI/CD pipeline
+          image: ognentrajkovski/earthquake-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
