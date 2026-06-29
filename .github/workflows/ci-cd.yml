@@ -98,14 +98,6 @@ jobs:
             sleep 10
           done
 
-      - name: Copy K8s Manifests to EC2
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ steps.ec2-ip.outputs.ip }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "k8s/"
-          target: "/home/ec2-user/EarthquakeDataManagementApplication/"
 
       - name: Deploy to EC2 via Docker Compose
         uses: appleboy/ssh-action@v1.0.3
