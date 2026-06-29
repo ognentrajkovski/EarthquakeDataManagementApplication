@@ -45,7 +45,7 @@ jobs:
         with:
           context: ./frontend
           build-args: |
-            VITE_API_URL=/api
+            VITE_API_URL=
           push: true
           tags: |
             ${{ env.FRONTEND_IMAGE }}:${{ steps.tag.outputs.tag }}
