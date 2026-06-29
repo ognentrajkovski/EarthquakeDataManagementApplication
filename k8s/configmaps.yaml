@@ -18,7 +18,7 @@ metadata:
   name: frontend-config
   namespace: earthquake-app
 data:
-    VITE_API_URL: "/api"
+    VITE_API_URL: ""
 ---
 # ConfigMap for MongoDB
 apiVersion: v1

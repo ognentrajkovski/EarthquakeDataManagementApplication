@@ -17,6 +17,6 @@ spec:
         - name: frontend
           # This image will be updated by the CI/CD pipeline
           image: ognentrajkovski/earthquake-frontend:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 80
