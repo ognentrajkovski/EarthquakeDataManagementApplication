@@ -5,7 +5,7 @@ metadata:
   namespace: earthquake-app
   annotations:
     # Depends on the ingress controller installed on the EC2 cluster (e.g. traefik or nginx)
-    kubernetes.io/ingress.class: "nginx"
+    kubernetes.io/ingress.class: "traefik"
     # If using Nginx ingress, rewrite target isn't strictly necessary for these exact paths if backend handles /api,
     # but the backend Spring app probably expects /api/earthquakes based on README
 spec:

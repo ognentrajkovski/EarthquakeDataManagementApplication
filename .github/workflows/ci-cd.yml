@@ -2,32 +2,45 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
+
+env:
+  REGISTRY: docker.io
+  BACKEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-backend
+  FRONTEND_IMAGE: ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-frontend
 
 jobs:
-  build-and-push:
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Log in to Docker Hub
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and Push Backend Image
+      - name: Set image tag
+        id: tag
+        run: echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Build and push backend image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-backend:${{ github.sha }}
+            ${{ env.BACKEND_IMAGE }}:${{ steps.tag.outputs.tag }}
+            ${{ env.BACKEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
-      - name: Build and Push Frontend Image
+      - name: Build and push frontend image
         uses: docker/build-push-action@v5
         with:
           context: ./frontend
@@ -35,58 +48,79 @@ jobs:
             VITE_API_URL=/api
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-frontend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/earthquake-frontend:${{ github.sha }}
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.tag.outputs.tag }}
+            ${{ env.FRONTEND_IMAGE }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deploy:
-    needs: build-and-push
+    needs: build
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy K8s Manifests to EC2
-        uses: appleboy/scp-action@v0.1.7
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ec2-user
-          key: ${{ secrets.EC2_SSH_KEY }}
-          source: "k8s/"
-          target: "/home/ec2-user/"
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-central-1
 
-      - name: Execute Deployment on EC2
+      - name: Start EC2 instance
+        run: |
+          echo " Starting EC2 instance..."
+          aws ec2 start-instances --instance-ids ${{ secrets.EC2_INSTANCE_ID }}
+          echo " Waiting for instance to be running..."
+          aws ec2 wait instance-running --instance-ids ${{ secrets.EC2_INSTANCE_ID }}
+          echo " EC2 instance is now running!"
+
+      - name: Get EC2 public IP
+        id: ec2-ip
+        run: |
+          PUBLIC_IP=$(aws ec2 describe-instances \
+            --instance-ids ${{ secrets.EC2_INSTANCE_ID }} \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+          echo "ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
+          echo " EC2 Public IP: $PUBLIC_IP"
+
+      - name: Wait for SSH to be ready
+        run: |
+          echo " Waiting for SSH to be ready..."
+          for i in {1..30}; do
+            if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i <(echo "${{ secrets.EC2_SSH_KEY }}") ec2-user@${{ steps.ec2-ip.outputs.ip }} exit 2>/dev/null; then
+              echo " SSH is ready!"
+              break
+            fi
+            echo " Attempt $i/30 - SSH not ready yet, waiting 10 seconds..."
+            sleep 10
+          done
+
+      - name: Prepare EC2 for Manual Kubernetes Deployment
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.EC2_HOST }}
+          host: ${{ steps.ec2-ip.outputs.ip }}
           username: ec2-user
           key: ${{ secrets.EC2_SSH_KEY }}
+          timeout: 300s
           script: |
-            # Check if k3d is installed
-            if ! command -v k3d &> /dev/null; then
-              echo "Installing k3d..."
-              curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-            fi
-            
-            # Check if kubectl is installed
-            if ! command -v kubectl &> /dev/null; then
-              echo "Installing kubectl..."
-              curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-              sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
+            set -e
+
+            echo "Starting preparation on EC2..."
+
+            PROJECT_DIR=~/EarthquakeDataManagementApplication
+
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "Cloning repository..."
+              git clone https://github.com/${{ github.repository }} "$PROJECT_DIR"
             fi
 
-            # Check if the cluster exists, if not create it
-            if ! k3d cluster list earthquake-cluster &> /dev/null; then
-              echo "Creating k3d cluster..."
-              # Map port 80 of the host to port 80 of the k3d loadbalancer (which feeds to Ingress)
-              k3d cluster create earthquake-cluster -p "80:80@loadbalancer"
-            fi
+            cd "$PROJECT_DIR"
+            
+            echo "Pulling latest code changes..."
+            git pull origin main
 
-            cd /home/ec2-user
-            
-            # Apply Kubernetes manifests
-            kubectl apply -f k8s/namespace.yaml
-            kubectl apply -f k8s/
-            
-            # Restart deployments to pull the latest image
-            kubectl rollout restart deployment backend -n earthquake-app
-            kubectl rollout restart deployment frontend -n earthquake-app
+            echo "Preparation completed! Your server is running and the code is updated."
+            echo "You can now SSH into the server and deploy your Kubernetes files manually."

@@ -30,7 +30,7 @@ spec:
     - name: http
       port: 80
       targetPort: 80
-  type: LoadBalancer
+  type: ClusterIP
 ---
 # MongoDB Service (ClusterIP for internal communication)
 apiVersion: v1
