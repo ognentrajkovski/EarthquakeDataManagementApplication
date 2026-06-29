@@ -113,6 +113,9 @@ jobs:
             set -e
 
             echo "Starting Docker Compose deployment on EC2..."
+            
+            # Ensure Docker daemon is running since the instance was just started
+            sudo systemctl start docker || sudo service docker start
 
             PROJECT_DIR=~/EarthquakeDataManagementApplication
 
