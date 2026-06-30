@@ -114,8 +114,18 @@ jobs:
 
             echo "Starting Docker Compose deployment on EC2..."
             
-            # Ensure Docker daemon is running since the instance was just started
-            sudo systemctl start docker || sudo service docker start
+            echo "Cleaning up any stale docker sockets and restarting containerd..."
+            sudo rm -f /var/run/docker.sock /var/run/docker.pid
+            sudo systemctl restart containerd || true
+            
+            echo "Attempting to start Docker daemon..."
+            sudo systemctl start docker || { 
+              echo "Docker failed to start! Fetching logs..."
+              sudo journalctl -xeu docker.service --no-pager
+              sudo journalctl -xeu containerd.service --no-pager
+              df -h
+              exit 1
+            }
 
             PROJECT_DIR=~/EarthquakeDataManagementApplication
 
