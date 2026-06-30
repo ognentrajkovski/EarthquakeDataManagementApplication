@@ -89,10 +89,9 @@ jobs:
       - name: Wait for SSH to be ready
         run: |
           echo " Waiting for SSH to be ready..."
-          echo "${{ secrets.EC2_SSH_KEY }}" > private_key.pem
-          chmod 600 private_key.pem
           for i in {1..5}; do
-            if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i private_key.pem ec2-user@${{ steps.ec2-ip.outputs.ip }} exit 2>/dev/null; thenecho " SSH is ready!"
+            if ssh -o ConnectTimeout=5 -o StrictHostKeyChecking=no -i <(echo "${{ secrets.EC2_SSH_KEY }}") ec2-user@${{ steps.ec2-ip.outputs.ip }} exit 2>/dev/null; then
+              echo " SSH is ready!"
               break
             fi
             echo " Attempt $i/5 - SSH not ready yet, waiting 10 seconds..."
