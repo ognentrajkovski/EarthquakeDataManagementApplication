@@ -29,7 +29,7 @@ services:
       # MongoDB URI — credentials read from shell env / .env file
       MONGODB_URI: mongodb://${MONGO_USER:-mongouser}:${MONGO_PASSWORD:-mongopass}@mongo:27017/earthquakedb?authSource=admin
       # CORS — allow the dockerised frontend and the Vite dev server
-      CORS_ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000
+      CORS_ALLOWED_ORIGINS: "*"
     ports:
       - "8080:8080"
     healthcheck:
