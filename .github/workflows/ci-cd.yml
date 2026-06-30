@@ -114,16 +114,22 @@ jobs:
 
             echo "Starting Docker Compose deployment on EC2..."
             
-            echo "Cleaning up any stale docker sockets and restarting containerd..."
-            sudo rm -f /var/run/docker.sock /var/run/docker.pid
-            sudo systemctl restart containerd || true
+            echo "Resetting Docker dependencies (docker.socket and containerd)..."
+            sudo systemctl stop docker docker.socket containerd || true
+            
+            # Use rm -rf in case Docker accidentally created a directory here during a failed bind-mount
+            sudo rm -rf /var/run/docker.sock /var/run/docker.pid
+            
+            echo "Starting dependencies..."
+            sudo systemctl start containerd
+            sudo systemctl start docker.socket
             
             echo "Attempting to start Docker daemon..."
             sudo systemctl start docker || { 
-              echo "Docker failed to start! Fetching logs..."
+              echo "Docker failed to start! Checking socket and dependency statuses..."
+              sudo systemctl status docker.socket || true
+              sudo systemctl status containerd || true
               sudo journalctl -xeu docker.service --no-pager
-              sudo journalctl -xeu containerd.service --no-pager
-              df -h
               exit 1
             }
 
