@@ -4,7 +4,12 @@ metadata:
   name: backend
   namespace: earthquake-app
 spec:
-  replicas: 1
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1        # Allow 1 extra pod during an update
+      maxUnavailable: 0  # Never take a pod down before a new one is ready (zero-downtime)
   selector:
     matchLabels:
       app: backend
@@ -56,6 +61,13 @@ spec:
                 configMapKeyRef:
                   name: app-config
                   key: SPRING_PROFILES_ACTIVE
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
           ports:
             - containerPort: 8080
           readinessProbe:
